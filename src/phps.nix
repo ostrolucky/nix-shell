@@ -47,7 +47,7 @@ nixpkgs: nix-phps: let
 
   phpMatrix = rec
   {
-    default = phpMatrix.php81;
+    default = composer.detectPhpVersion phpMatrix;
 
     php56 = {
       extensions = extensions ++ ["json"];
@@ -102,7 +102,7 @@ nixpkgs: nix-phps: let
   };
 
   makePhp = nixpkgs: nix-phps: system: {
-    php,
+    php ? phpMatrix.default,
     extensions ? phpMatrix."${php}".extensions,
     withExtensions ? [],
     withoutExtensions ? (phpMatrix."${php}".withoutExtensions or []),
@@ -171,6 +171,6 @@ nixpkgs: nix-phps: let
     };
 in {
   inherit makePhpEnv;
-  matrix = phpMatrix // {default = phpMatrix.php81;};
+  matrix = phpMatrix;
   makePhp = makePhp nixpkgs nix-phps;
 }

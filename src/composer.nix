@@ -1,14 +1,14 @@
 nixpkgs: let
-  getExtensionFromSection = section: let
-    readJsonSectionFromFile = file: section: default: let
-      filepath = "${builtins.getEnv "PWD"}/${file}";
-      filecontent =
-        if builtins.pathExists filepath
-        then builtins.fromJSON (builtins.readFile filepath)
-        else {};
-    in
-      filecontent.${section} or default;
+  readJsonSectionFromFile = file: section: default: let
+    filepath = "${builtins.getEnv "PWD"}/${file}";
+    filecontent =
+      if builtins.pathExists filepath
+      then builtins.fromJSON (builtins.readFile filepath)
+      else {};
+  in
+    filecontent.${section} or default;
 
+  getExtensionFromSection = section: let
     # Get "require" section to extract extensions later
     require = readJsonSectionFromFile "composer.json" section {};
     # Copy keys into values
@@ -21,6 +21,21 @@ nixpkgs: let
 
   composer = {
     inherit getExtensionFromSection;
+    detectPhpVersion = phpMatrix: let
+      require = readJsonSectionFromFile "composer.json" "require" {};
+      default = phpMatrix.php81;
+    in
+      if builtins.hasAttr "php" require
+      then
+        phpMatrix
+        .${
+          "php"
+          + builtins.replaceStrings ["."] [""] (
+            builtins.head (builtins.match ".*([[:digit:]]\.[[:digit:]])" require.php)
+          )
+        }
+        or default
+      else default;
   };
 in
   composer
